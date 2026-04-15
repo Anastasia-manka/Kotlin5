@@ -332,8 +332,8 @@ fun DiaryApp() {
         }
         composable("entry/{fileName}") { backStackEntry ->
             val fileName = backStackEntry.arguments?.getString("fileName") ?: ""
-            val entries by viewModel.entries.collectAsState()  // добавляем эту строку
-            val entry = entries.find { it.fileName == fileName }  // используем entries
+            val entries by viewModel.entries.collectAsState()
+            val entry = entries.find { it.fileName == fileName }
             EntryScreen(navController, viewModel, entry)
         }
     }

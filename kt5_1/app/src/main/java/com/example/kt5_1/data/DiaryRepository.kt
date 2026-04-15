@@ -5,7 +5,7 @@ import com.example.kt5_1.domain.DiaryEntry
 import com.example.kt5_1.domain.DiaryRepository
 import java.io.File
 
-// Интерфейс репозитория
+
 interface DiaryRepository {
     suspend fun getAllEntries(): List<DiaryEntry>
     suspend fun saveEntry(title: String, content: String): DiaryEntry
