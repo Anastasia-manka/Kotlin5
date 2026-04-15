@@ -116,7 +116,7 @@ fun MainScreen(
                             DiaryItem(
                                 entry = entry,
                                 onClick = {
-                                    // TODO: переход на экран редактирования
+                                    navController.navigate("entry/${entry.fileName}")
                                 },
                                 onDelete = {
                                     viewModel.deleteEntry(entry.fileName)
@@ -215,72 +215,82 @@ fun DiaryItem(
 @Composable
 fun EntryScreen(
     navController: NavController,
-    viewModel: DiaryViewModel
+    viewModel: DiaryViewModel,
+    entry: DiaryEntry? = null
 ) {
-    var title by rememberSaveable { mutableStateOf("") }
-    var content by rememberSaveable { mutableStateOf("") }
+    key(entry?.fileName) {
+        var title by rememberSaveable { mutableStateOf(entry?.title ?: "") }
+        var content by rememberSaveable { mutableStateOf(entry?.content ?: "") }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Новая запись") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Назад")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
+        val isEditing = entry != null
+
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(if (isEditing) "Редактирование записи" else "Новая запись") },
+                    navigationIcon = {
+                        IconButton(onClick = { navController.navigateUp() }) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Назад")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
                 )
-            )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    if (title.isNotBlank() || content.isNotBlank()) {
-                        viewModel.addEntry(title, content)
-                        navController.navigateUp()
-                    }
-                },
-                containerColor = MaterialTheme.colorScheme.primary
-            ) {
-                Text("Сохранить", color = Color.White)
+            },
+            floatingActionButton = {
+                FloatingActionButton(
+                    onClick = {
+                        if (title.isNotBlank() || content.isNotBlank()) {
+                            if (isEditing && entry != null) {
+                                viewModel.deleteEntry(entry.fileName)
+                                viewModel.addEntry(title, content)
+                            } else {
+                                viewModel.addEntry(title, content)
+                            }
+                            navController.navigateUp()
+                        }
+                    },
+                    containerColor = MaterialTheme.colorScheme.primary
+                ) {
+                    Text(if (isEditing) "Обновить" else "Сохранить")
+                }
             }
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            OutlinedTextField(
-                value = title,
-                onValueChange = { title = it },
-                label = { Text("Заголовок") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp),
-                colors = TextFieldDefaults.outlinedTextFieldColors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                )
-            )
-
-            OutlinedTextField(
-                value = content,
-                onValueChange = { content = it },
-                label = { Text("Текст записи") },
+        ) { paddingValues ->
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                shape = RoundedCornerShape(12.dp),
-                colors = TextFieldDefaults.outlinedTextFieldColors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Заголовок (опционально)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                    )
                 )
-            )
+
+                OutlinedTextField(
+                    value = content,
+                    onValueChange = { content = it },
+                    label = { Text("Текст записи") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                    )
+                )
+            }
         }
     }
 }
@@ -319,6 +329,12 @@ fun DiaryApp() {
         }
         composable("entry") {
             EntryScreen(navController, viewModel)
+        }
+        composable("entry/{fileName}") { backStackEntry ->
+            val fileName = backStackEntry.arguments?.getString("fileName") ?: ""
+            val entries by viewModel.entries.collectAsState()  // добавляем эту строку
+            val entry = entries.find { it.fileName == fileName }  // используем entries
+            EntryScreen(navController, viewModel, entry)
         }
     }
 }
