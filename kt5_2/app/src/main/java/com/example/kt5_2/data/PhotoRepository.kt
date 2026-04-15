@@ -34,7 +34,7 @@ class PhotoRepositoryImpl(private val context: Context) : PhotoRepository {
     }
 
     override suspend fun savePhoto(file: File): Photo {
-        // Копируем файл в директорию приложения если он ещё не там
+
         val destFile = File(photosDir, file.name)
         if (!destFile.exists()) {
             file.copyTo(destFile, overwrite = true)
@@ -51,6 +51,33 @@ class PhotoRepositoryImpl(private val context: Context) : PhotoRepository {
 
     override suspend fun deletePhoto(photo: Photo) {
         File(photo.filePath).delete()
+    }
+
+    override suspend fun exportToGallery(photo: Photo): Boolean {
+        return try {
+            val sourceFile = File(photo.filePath)
+            val contentValues = ContentValues().apply {
+                put(MediaStore.Images.Media.DISPLAY_NAME, sourceFile.name)
+                put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+                put(MediaStore.Images.Media.RELATIVE_PATH, "${Environment.DIRECTORY_PICTURES}/MyAppExported")
+            }
+
+            val uri = context.contentResolver.insert(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                contentValues
+            )
+
+            uri?.let {
+                context.contentResolver.openOutputStream(it)?.use { output ->
+                    sourceFile.inputStream().use { input ->
+                        input.copyTo(output)
+                    }
+                }
+                true
+            } ?: false
+        } catch (e: Exception) {
+            false
+        }
     }
 
     companion object {

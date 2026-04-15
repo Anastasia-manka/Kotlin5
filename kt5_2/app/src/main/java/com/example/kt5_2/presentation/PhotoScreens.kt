@@ -58,6 +58,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.filled.ArrowBack
 import com.example.kt5_2.domain.*
 import android.os.Environment
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 
 // Главный экран со списком фото
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
@@ -194,7 +198,7 @@ fun CameraScreen(
     CameraPreview(
         onImageCapture = { imageCapture = it },
         onError = { error ->
-            // Обработка ошибки
+
         }
     )
 
@@ -296,6 +300,8 @@ fun DetailScreen(
 ) {
     val photos by viewModel.photos.collectAsState()
     val photo = photos.find { it.id == photoId }
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     Scaffold(
         topBar = {
@@ -342,7 +348,17 @@ fun DetailScreen(
 
                 Button(
                     onClick = {
-                        // TODO: экспорт в галерею
+                        scope.launch {
+                            viewModel.exportPhoto(photo) { success ->
+                                scope.launch {
+                                    if (success) {
+                                        snackbarHostState.showSnackbar("Фото добавлено в галерею")
+                                    } else {
+                                        snackbarHostState.showSnackbar("Ошибка при экспорте")
+                                    }
+                                }
+                            }
+                        }
                     }
                 ) {
                     Text("Экспорт в галерею")
@@ -359,9 +375,11 @@ fun PhotoApp() {
     val context = LocalContext.current
 
     val repository = PhotoRepositoryImpl(context)
+
     val getAllPhotosUseCase = GetAllPhotosUseCase(repository)
     val addPhotoUseCase = AddPhotoUseCase(repository)
     val deletePhotoUseCase = DeletePhotoUseCase(repository)
+    val exportPhotoUseCase = ExportPhotoUseCase(repository)
 
     val viewModel: PhotoViewModel = viewModel(
         factory = object : androidx.lifecycle.ViewModelProvider.Factory {
@@ -370,7 +388,8 @@ fun PhotoApp() {
                 return PhotoViewModel(
                     getAllPhotosUseCase,
                     addPhotoUseCase,
-                    deletePhotoUseCase
+                    deletePhotoUseCase,
+                    exportPhotoUseCase
                 ) as T
             }
         }

@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.kt5_2.domain.AddPhotoUseCase
 import com.example.kt5_2.domain.DeletePhotoUseCase
+import com.example.kt5_2.domain.ExportPhotoUseCase
 import com.example.kt5_2.domain.GetAllPhotosUseCase
 import com.example.kt5_2.domain.Photo
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,7 +17,8 @@ import java.io.File
 class PhotoViewModel(
     private val getAllPhotosUseCase: GetAllPhotosUseCase,
     private val addPhotoUseCase: AddPhotoUseCase,
-    private val deletePhotoUseCase: DeletePhotoUseCase
+    private val deletePhotoUseCase: DeletePhotoUseCase,
+    private val exportPhotoUseCase: ExportPhotoUseCase
 ) : ViewModel() {
 
     private val _photos = MutableStateFlow<List<Photo>>(emptyList())
@@ -48,6 +50,13 @@ class PhotoViewModel(
         viewModelScope.launch {
             deletePhotoUseCase(photo)
             _photos.value = _photos.value.filter { it.id != photo.id }
+        }
+    }
+
+    fun exportPhoto(photo: Photo, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val result = exportPhotoUseCase(photo)
+            onResult(result)
         }
     }
 }

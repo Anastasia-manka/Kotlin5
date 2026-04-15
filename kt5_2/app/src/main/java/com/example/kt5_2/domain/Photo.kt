@@ -30,9 +30,14 @@ class DeletePhotoUseCase(private val repository: PhotoRepository) {
     suspend operator fun invoke(photo: Photo) = repository.deletePhoto(photo)
 }
 
+class ExportPhotoUseCase(private val repository: PhotoRepository) {
+    suspend operator fun invoke(photo: Photo): Boolean = repository.exportToGallery(photo)
+}
+
 // Интерфейс репозитория
 interface PhotoRepository {
     suspend fun getAllPhotos(): List<Photo>
     suspend fun savePhoto(file: File): Photo
     suspend fun deletePhoto(photo: Photo)
+    suspend fun exportToGallery(photo: Photo): Boolean
 }
