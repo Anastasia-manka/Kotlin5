@@ -1,0 +1,22 @@
+[
+  {
+    "title": "Изучить Room",
+    "description": "Прочитать документацию по Room и настроить базу данных",
+    "isCompleted": false
+  },
+  {
+    "title": "Настроить DataStore",
+    "description": "Реализовать сохранение цвета выполненных задач",
+    "isCompleted": false
+  },
+  {
+    "title": "Сделать импорт из JSON",
+    "description": "Разовый импорт задач из JSON файла при первом запуске",
+    "isCompleted": false
+  },
+  {
+    "title": "Добавить CRUD операции",
+    "description": "Реализовать добавление, изменение и удаление задач",
+    "isCompleted": true
+  }
+]
