@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
 
 class TaskViewModel(
     private val getAllTasksUseCase: GetAllTasksUseCase,
@@ -59,8 +60,8 @@ class TaskViewModel(
 
     private fun checkAndImportTasks() {
         viewModelScope.launch {
-            val currentTasks = _tasks.value
-            if (currentTasks.isEmpty()) {
+            val tasks = getAllTasksUseCase().first()  // собираем Flow в список
+            if (tasks.isEmpty()) {
                 _isLoading.value = true
                 importTasksUseCase()
                 loadTasks()
